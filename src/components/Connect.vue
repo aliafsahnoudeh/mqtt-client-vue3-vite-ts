@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import type IServices from "../services/IServices";
-import type IMqttService from "../services/IMqttService";
-import { inject, ref } from "vue";
+import { ref } from "vue";
 import type { Ref } from "vue";
-import { useMqttClient } from "../store/mqttClient";
-
-const services = inject<IServices | null>("services");
-let mqttService: IMqttService;
-if (services !== undefined && services !== null)
-  mqttService = services.mqttService;
+import { useMqttClientStore } from "../store/mqttClient";
+import { useMqttClient } from "../composables/useMqttClient";
 
 const hostname: Ref<string> = ref(
   "21c9dfead6da4092a72c0da98562c2b5.s2.eu.hivemq.cloud"
@@ -16,32 +10,21 @@ const hostname: Ref<string> = ref(
 const username: Ref<string> = ref("ali-test");
 const password: Ref<string> = ref("FkNYnhLFmrTUj6_");
 
-const store = useMqttClient();
+const store = useMqttClientStore();
+const { connect, disconnect } = useMqttClient();
 
-async function connect() {
-  try {
-    await mqttService.connect(hostname.value, username.value, password.value);
-    store.setConnected(true);
-  } catch (error) {
-    store.setConnected(false);
-  }
+async function handleConnect() {
+  await connect(hostname.value, username.value, password.value);
 }
 
-async function disconnect() {
-  try {
-    await mqttService.disconnect();
-    store.setConnected(false);
-  } catch (error) {
-    store.setConnected(true);
-  }
+async function handleDisonnect() {
+  await disconnect();
 }
 </script>
 
 <template>
   <Card>
-    <template #header>
-      <Avatar icon="pi pi-user" size="xlarge" />
-    </template>
+    <template #header> Connection </template>
     <template #content>
       <div class="content-container">
         <span class="p-float-label">
@@ -62,15 +45,15 @@ async function disconnect() {
     </template>
     <template #footer>
       <Button
-        icon="pi pi-check"
+        icon="pi"
         label="Connect"
         :disabled="store.connected"
-        @click="connect"
+        @click="handleConnect"
       />
       <Button
         :disabled="!store.connected"
-        @click="disconnect"
-        icon="pi pi-times"
+        @click="handleDisonnect"
+        icon="pi"
         label="Disconnect"
         class="p-button-secondary"
         style="margin-left: 0.5em"

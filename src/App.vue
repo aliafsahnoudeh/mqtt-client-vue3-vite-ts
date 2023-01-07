@@ -11,4 +11,5 @@ provide("services", services);
 
 <template>
   <RouterView />
+  <Toast />
 </template>

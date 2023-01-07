@@ -1,9 +1,12 @@
 import * as mqtt from "mqtt/dist/mqtt.min.js";
 import type {
   IClientOptions,
+  IDisconnectPacket,
+  IPublishPacket,
   ISubscriptionGrant,
   MqttClient,
   Packet,
+  QoS,
 } from "mqtt";
 import type IMqttService from "./IMqttService";
 
@@ -18,7 +21,7 @@ class MqttService implements IMqttService {
     return new Promise((resove, reject) => {
       try {
         this._client = mqtt.connect({
-          clientId: "clientId-sqt8rMcmA6",
+          clientId: "web-client-" + Math.floor(Math.random() * 1000000000),
           hostname,
           username,
           password,
@@ -27,23 +30,13 @@ class MqttService implements IMqttService {
           port: 8884,
           path: "/mqtt",
           clean: true,
-          resubscribe: false,
+          resubscribe: true,
           keepalive: 60,
-          reconnectPeriod: 0,
+          reconnectPeriod: 5,
         } as IClientOptions);
 
-        this._client.on("connect", function () {
-          console.log("Connected");
+        this._client?.on("connect", () => {
           resove();
-        });
-
-        this._client.on("error", function (error: any) {
-          console.log(error);
-        });
-
-        this._client.on("message", function (topic: any, message: any) {
-          // called each time a message is received
-          console.log("Received message:", topic, message.toString());
         });
       } catch (error) {
         reject(error);
@@ -53,7 +46,7 @@ class MqttService implements IMqttService {
 
   public disconnect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this._client.end(true, {}, (error?: Error) => {
+      this._client?.end(true, {}, (error?: Error) => {
         if (error) reject();
         resolve();
       });
@@ -63,7 +56,7 @@ class MqttService implements IMqttService {
   public subscribe(topic: string): Promise<ISubscriptionGrant[]> {
     return new Promise((resolve, reject) => {
       try {
-        this._client.subscribe(
+        this._client?.subscribe(
           topic,
           (error: Error, granted: ISubscriptionGrant[]) => {
             if (error) reject(error);
@@ -76,18 +69,28 @@ class MqttService implements IMqttService {
     });
   }
 
-  public publish(topic: string, message: string): Promise<Packet> {
+  public publish(
+    topic: string,
+    message: string,
+    qos: QoS
+  ): Promise<Packet | undefined> {
     return new Promise((resolve, reject) => {
+      if (this._client === undefined) throw new Error("client is undefined");
+
       this._client.publish(
         topic,
         message,
-        {},
+        { qos },
         (error?: Error, packet?: Packet) => {
           if (error) reject(error);
           resolve(packet);
         }
       );
     });
+  }
+
+  public attachListeners(event: string, callback: any) {
+    this._client?.on(event, callback);
   }
 }
 

@@ -2,33 +2,34 @@
 import { ref } from "vue";
 import type { Ref } from "vue";
 import { useMqttClientStore } from "../store/mqttClient";
-import { useMqttClient } from "../composables/useMqttClient";
 import type { QoS } from "mqtt";
-
-const topic: Ref<string> = ref("");
-const qos: Ref<QoS> = ref("");
+import { useMqttClient } from "../composables/useMqttClient";
 
 const OoSOptions = ["0", "1", "2"];
 
-const store = useMqttClientStore();
-const { subscribe } = useMqttClient();
+const topic: Ref<string> = ref("");
+const qos: Ref<QoS> = ref(0);
+const message: Ref<string> = ref("");
 
-async function handleSubscribe() {
-  await subscribe(topic.value);
+const store = useMqttClientStore();
+const { publish } = useMqttClient();
+
+async function handlePublish() {
+  await publish(topic.value, message.value, qos.value);
+  message.value = "";
 }
 </script>
 
 <template>
   <Card>
-    <template #header> Subscriptions </template>
+    <template #header> Publish a message </template>
     <template #content>
       <div class="content-container">
-        <div class="content-container-inputs">
+        <div class="content-container-topic">
           <span class="p-float-label">
             <InputText id="topic" type="text" v-model="topic" />
             <label for="topic">Topic</label>
           </span>
-
           <span class="p-float-label">
             <Dropdown
               id="qos"
@@ -40,20 +41,21 @@ async function handleSubscribe() {
           </span>
         </div>
 
-        <div class="content-container-table">
-          <DataTable :value="store.subscribedTopics" responsiveLayout="scroll">
-            <Column field="topic" header="Topic"></Column>
-            <Column field="qos" header="Qos"></Column>
-          </DataTable>
-        </div>
+        <span class="p-float-label">
+          <Textarea v-model="message" rows="5" cols="30" />
+          <label for="message">Message body</label>
+        </span>
       </div>
     </template>
     <template #footer>
       <Button
+        :disabled="
+          !store.connected || topic.length === 0 || message.length === 0
+        "
+        @click="handlePublish"
         icon="pi"
-        label="Subscribe"
-        :disabled="!store.connected || topic.length === 0"
-        @click="handleSubscribe"
+        label="Publish"
+        style="margin-left: 0.5em"
       />
     </template>
   </Card>
@@ -65,14 +67,9 @@ async function handleSubscribe() {
   flex-direction: column;
   row-gap: 5vh;
 
-  &-inputs {
+  &-topic {
     display: flex;
     column-gap: 2vw;
-  }
-
-  &-table {
-    max-height: 15vh;
-    overflow-y: scroll;
   }
 }
 </style>
