@@ -12,7 +12,3 @@ provide("services", services);
 <template>
   <RouterView />
 </template>
-
-<style lang="scss">
-@import "./assets/styles/index.scss";
-</style>

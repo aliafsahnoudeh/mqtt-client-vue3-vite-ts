@@ -1,5 +1,10 @@
 import * as mqtt from "mqtt/dist/mqtt.min.js";
-import type { IClientOptions, MqttClient, Packet } from "mqtt";
+import type {
+  IClientOptions,
+  ISubscriptionGrant,
+  MqttClient,
+  Packet,
+} from "mqtt";
 import type IMqttService from "./IMqttService";
 
 class MqttService implements IMqttService {
@@ -55,19 +60,31 @@ class MqttService implements IMqttService {
     });
   }
 
-  public subscribe(topic: string) {
-    this._client.subscribe(topic);
+  public subscribe(topic: string): Promise<ISubscriptionGrant[]> {
+    return new Promise((resolve, reject) => {
+      try {
+        this._client.subscribe(
+          topic,
+          (error: Error, granted: ISubscriptionGrant[]) => {
+            if (error) reject(error);
+            resolve(granted);
+          }
+        );
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
-  public publish(topic: string, message: string): Promise<void> {
+  public publish(topic: string, message: string): Promise<Packet> {
     return new Promise((resolve, reject) => {
       this._client.publish(
         topic,
         message,
         {},
         (error?: Error, packet?: Packet) => {
-          if (error) reject();
-          resolve();
+          if (error) reject(error);
+          resolve(packet);
         }
       );
     });
