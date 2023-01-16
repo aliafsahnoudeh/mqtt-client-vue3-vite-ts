@@ -4,11 +4,9 @@ import type { Ref } from "vue";
 import { useMqttClientStore } from "../store/mqttClient";
 import { useMqttClient } from "../composables/useMqttClient";
 
-const hostname: Ref<string> = ref(
-  "21c9dfead6da4092a72c0da98562c2b5.s2.eu.hivemq.cloud"
-);
-const username: Ref<string> = ref("ali-test");
-const password: Ref<string> = ref("FkNYnhLFmrTUj6_");
+const hostname: Ref<string> = ref("");
+const username: Ref<string> = ref("");
+const password: Ref<string> = ref("");
 
 const store = useMqttClientStore();
 const { connect, disconnect } = useMqttClient();
